@@ -1,0 +1,65 @@
+import 'package:flutter/material.dart';
+import 'models/question.dart';
+import 'services/quiz_service.dart';
+
+class QuizScreen extends StatefulWidget {
+  final String category;
+  QuizScreen({required this.category});
+
+  @override
+  _QuizScreenState createState() => _QuizScreenState();
+}
+
+class _QuizScreenState extends State<QuizScreen> {
+  final QuizService _quizService = QuizService();
+  List<Question> _questions = [];
+  int _currentQuestionIndex = 0;
+  int _score = 0;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadQuestions();
+  }
+
+  Future<void> _loadQuestions() async {
+    _questions = await _quizService.fetchQuestions(widget.category);
+    setState(() => _loading = false);
+  }
+
+  void _answerQuestion(String selectedAnswer) {
+    if (selectedAnswer == _questions[_currentQuestionIndex].correctAnswer) {
+      setState(() => _score++);
+    }
+
+    if (_currentQuestionIndex < _questions.length - 1) {
+      setState(() => _currentQuestionIndex++);
+    } else {
+      Navigator.pushReplacementNamed(context, '/result', arguments: _score);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return Center(child: CircularProgressIndicator());
+
+    final question = _questions[_currentQuestionIndex];
+    return Scaffold(
+      appBar: AppBar(title: Text("Quiz - ${widget.category}")),
+      body: Column(
+        children: [
+          Text("Score: $_score"),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(question.question, style: TextStyle(fontSize: 20)),
+          ),
+          ...question.options.map((option) => ElevatedButton(
+                onPressed: () => _answerQuestion(option),
+                child: Text(option),
+              )),
+        ],
+      ),
+    );
+  }
+}

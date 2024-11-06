@@ -1,0 +1,28 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+class MultiplayerService {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<void> createGameRoom(String playerName) async {
+    await _firestore.collection('gameRooms').add({
+      'player1': playerName,
+      'player2': null,
+      'player1Score': 0,
+      'player2Score': 0,
+      'questions': [],
+      'isStarted': false,
+    });
+  }
+
+  Future<void> joinGameRoom(String roomId, String playerName) async {
+    await _firestore.collection('gameRooms').doc(roomId).update({
+      'player2': playerName,
+      'isStarted': true,
+    });
+  }
+
+  Stream<DocumentSnapshot> listenToGameRoom(String roomId) {
+    return _firestore.collection('gameRooms').doc(roomId).snapshots();
+  }
+}
